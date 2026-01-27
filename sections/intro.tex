@@ -1,21 +1,22 @@
 \section{Introduction}
 
-\subsection{What is the problem?}
+Large language models (LLMs) have achieved remarkable success in biomedical question answering, yet a fundamental question remains unanswered: \textit{What knowledge source (pretraining or fine-tuning data) drives the model's predictions?} This transparency is critical for deploying trustworthy AI in healthcare, where clinical accountability demands understanding the provenance of model outputs.
 
+When fine-tuning an LLM on biomedical QA tasks like PubMedQA, the model draws from two knowledge sources: (1) the vast pretrained corpus containing general and medical knowledge, and (2) task-specific fine-tuning examples. Current practices treat these models as black boxes, offering no visibility into which source influences specific predictions. This opacity hinders bias detection, model debugging, and regulatory compliance in medical AI systems.
 
+Training data attribution methods aim to address this challenge by quantifying each training sample's influence on model predictions. However, existing approaches face critical limitations at LLM scale. Traditional influence functions require inverting the Hessian matrix, which is computationally infeasible for billion-parameter models. Full gradient storage demands terabytes per dataset. Meanwhile, lexical methods like BM25 capture only surface-level similarity, failing to reflect what the model \textit{actually learned} versus what merely \textit{looks similar}.
 
-\subsection{Why is it interesting and important?}
+In this paper, we employ LARK (Linearized Attribution via Rapid Kernel), a scalable gradient-based training data attribution method, to study knowledge dynamics in fine-tuned LLMs. LARK approximates influence functions by assuming an identity Hessian and uses OPORP (One Permutation + One Random Projection) for efficient dimensionality reduction, achieving 54,000$\times$ compression over full gradient storage while preserving attribution fidelity.
 
+We apply this method to study how fine-tuning shapes LLM behavior on PubMedQA using OLMo-3-7B. Our experiments reveal a surprising ``knowledge awakening'' phenomenon: while fine-tuning data dominates early training, pretrained knowledge becomes increasingly influential as training progresses (0\% $\rightarrow$ 28.4\% pretraining dominance). This suggests that fine-tuning acts as a ``key'' that unlocks relevant pretrained knowledge rather than simply imprinting new patterns.
 
-
-\subsection{Why is it hard? (E.g., why do naive approaches fail?)} 
-   
-
-\subsection{Why hasn't it been solved before?}
-
-
-
-\subsection{What are the key components of my approach and results?}
+Our contributions are as follows:
+\begin{itemize}[nosep,leftmargin=*]
+    \item We employ LARK for scalable training data attribution, achieving 54,000$\times$ storage compression for 7B-parameter LLMs to study fine-tuning dynamics in biomedical QA.
+    \item We validate that LARK correctly distinguishes domain-relevant from irrelevant data, with medical content showing 28.5\% higher influence than entertainment content.
+    \item We discover the ``knowledge awakening'' phenomenon where pretraining influence increases monotonically during fine-tuning (0\% to 28.4\% dominance).
+    \item We demonstrate LARK outperforms lexical methods (BM25) by 46.2 percentage points in attribution accuracy, establishing the necessity of gradient-based methods for healthcare AI.
+\end{itemize}
 
 
 

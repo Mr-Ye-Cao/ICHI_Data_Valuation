@@ -1,8 +1,43 @@
 \section{Problem Statement}
 
-
+We formalize the problem of training data attribution for fine-tuned LLMs and define quantitative measures for evaluating knowledge source contributions.
 
 \subsection{Behavior-Aware Data Attribution for Biomedical LLMs}
 
+Let $\mathcal{M}_\theta$ denote an LLM with parameters $\theta$, obtained by fine-tuning a pretrained model $\mathcal{M}_{\theta_0}$ on a dataset $\mathcal{D}_{\text{ft}} = \{(x_i, y_i)\}_{i=1}^{n}$. Given a test query $q$ with model output $\hat{y} = \mathcal{M}_\theta(q)$, our goal is to quantify the influence of each training sample on this prediction.
 
-\subsection{Quantitative Evaluation of Impacts from Pre-Training or Fine-Tuning Data}
+\textbf{Definition 1 (Behavior-Aware Data Attribution).} For a test query $q$ and training sample $z_i = (x_i, y_i)$, the \textit{behavior-aware attribution score} $\phi(z_i, q)$ measures the causal influence of $z_i$ on the model's prediction, reflecting what the model \textit{actually learned} rather than superficial similarities (e.g., lexical overlap). This distinction is critical for biomedical applications where documents may share medical terminology but convey different clinical knowledge.
+
+In the biomedical context, we consider two knowledge sources: $\mathcal{D}_{\text{ft}}$ (fine-tuning data, e.g., PubMedQA) and $\mathcal{D}_{\text{pt}}$ (pretrained corpus, e.g., medical literature).
+
+\subsection{Quantitative Data Attribution of LLM Pre-Training and Fine-Tuning Data}
+
+To compare the relative contributions of fine-tuning and pretraining data, we define aggregate metrics over a set of test queries $\mathcal{Q} = \{q_1, \ldots, q_m\}$.
+
+\textbf{Definition 2 (Source Influence).} For a data source $\mathcal{D}_s \in \{\mathcal{D}_{\text{ft}}, \mathcal{D}_{\text{pt}}\}$ and test query $q$, the \textit{source influence} is:
+\begin{equation}
+    \Phi(\mathcal{D}_s, q) = \max_{z_i \in \mathcal{D}_s} \phi(z_i, q)
+\end{equation}
+
+We use maximum rather than mean influence because attribution is typically sparse: a small number of highly relevant training samples dominate each prediction.
+
+\textbf{Definition 3 (FT/PT Ratio).} The \textit{fine-tuning to pretraining ratio} for query $q$ is:
+\begin{equation}
+    R(q) = \frac{\Phi(\mathcal{D}_{\text{ft}}, q)}{\Phi(\mathcal{D}_{\text{pt}}, q)}
+\end{equation}
+
+A ratio $R(q) > 1$ indicates fine-tuning data dominates, while $R(q) < 1$ suggests pretrained knowledge is more influential.
+
+\textbf{Definition 4 (PT Dominance Rate).} Across a test set $\mathcal{Q}$, the \textit{pretraining dominance rate} measures how often pretrained data has higher influence:
+\begin{equation}
+    \text{PT-Dom}(\mathcal{Q}) = \frac{1}{|\mathcal{Q}|} \sum_{q \in \mathcal{Q}} \mathbf{1}[\Phi(\mathcal{D}_{\text{pt}}, q) > \Phi(\mathcal{D}_{\text{ft}}, q)]
+\end{equation}
+
+Tracking PT-Dom across training epochs reveals the dynamics of knowledge utilization during fine-tuning.
+
+\textbf{Research Questions.} Using these definitions, we investigate:
+\begin{enumerate}[nosep,leftmargin=*]
+    \item Can behavior-aware attribution distinguish domain-relevant from domain-irrelevant pretrained data?
+    \item How does the FT/PT ratio evolve during fine-tuning epochs?
+    \item Does gradient-based attribution outperform lexical methods for biomedical LLMs?
+\end{enumerate}

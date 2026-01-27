@@ -5,7 +5,7 @@ We conduct comprehensive experiments to evaluate the effectiveness of gradient-b
 \begin{itemize}[nosep,leftmargin=*]
     \item \textbf{RQ1:} Can gradient-based attribution accurately distinguish between domain-relevant and domain-irrelevant training data?
     \item \textbf{RQ2:} How does the relative influence of fine-tuning versus pretraining data evolve during the fine-tuning process?
-    \item \textbf{RQ3:} How does gradient-based attribution (RapidIn) compare to lexical-based retrieval (BM25) in terms of efficiency and accuracy?
+    \item \textbf{RQ3:} How does gradient-based attribution (LARK) compare to lexical-based retrieval (BM25) in terms of efficiency and accuracy?
 \end{itemize}
 
 \subsection{Experimental Setup}
@@ -26,7 +26,7 @@ To isolate the effect of QA formatting from content, we create two versions of e
 We use OLMo-3-7B-Instruct~\cite{groeneveld2024olmo} as our base model, a 7.3 billion parameter instruction-tuned language model. We perform full fine-tuning of all model parameters, enabled by the NVIDIA GH200 GPU with 100GB unified memory. We train for 5 epochs with batch size 4 and learning rate $2 \times 10^{-4}$ (reduced to $2 \times 10^{-5}$ for epochs 4-5). Model checkpoints are saved after each epoch to track training dynamics.
 
 \noindent\textbf{Attribution Method.}
-We employ RapidIn~\cite{zhang2024rapidin}, a gradient-based training data attribution method that computes influence scores via cosine similarity between projected gradients. For each test query, we compute the gradient of the loss with respect to model parameters, project it to a low-dimensional space ($k=65536$), and calculate similarity with projected training gradients. Higher similarity indicates stronger influence on the model's prediction.
+We employ LARK (Linearized Attribution via Rapid Kernel), a gradient-based training data attribution method that computes influence scores via cosine similarity between projected gradients. For each test query, we compute the gradient of the loss with respect to model parameters, project it to a low-dimensional space using OPORP ($k=65536$), and calculate similarity with projected training gradients. Higher similarity indicates stronger influence on the model's prediction.
 
 \noindent\textbf{Evaluation Metrics.}
 We report the following metrics:
@@ -113,7 +113,7 @@ Figure~\ref{fig:dynamics} visualizes this trend, showing the monotonic increase 
 
 \subsection{RQ3: Method Comparison}
 
-We compare RapidIn (gradient-based) against BM25 (lexical-based retrieval) for training data attribution, evaluating both efficiency and accuracy.
+We compare LARK (gradient-based) against BM25 (lexical-based retrieval) for training data attribution, evaluating both efficiency and accuracy.
 
 \noindent\textbf{Storage Efficiency.}
 Table~\ref{tab:efficiency} compares the storage requirements of different attribution methods for a 7.3B parameter model.
@@ -126,28 +126,28 @@ Table~\ref{tab:efficiency} compares the storage requirements of different attrib
 \hline
 \textbf{Method} & \textbf{Per Sample} & \textbf{500 Samples} \\
 \hline
-TracIn (Full Gradient) & 13.59 GB & 6.64 TB \\
-RapidIn ($k$=65536) & 130 KB & 65 MB \\
+TracIn (Full Gradient) & 14 GB & 7 TB \\
+LARK ($k$=65536) & 260 KB & 130 MB \\
 \hline
-\multicolumn{3}{c}{\textbf{Compression Ratio: 104,000$\times$}} \\
+\multicolumn{3}{c}{\textbf{Compression Ratio: 54,000$\times$}} \\
 \hline
 \end{tabular}
 \end{table}
 
-Traditional gradient-based methods like TracIn require storing the full gradient for each training sample, resulting in 13.59 GB per sample for a 7.3B parameter model. This makes TracIn infeasible at LLM scale---500 samples would require 6.64 TB of storage. RapidIn's projection approach achieves a 104,000$\times$ compression ratio while maintaining attribution validity.
+Traditional gradient-based methods like TracIn require storing the full gradient for each training sample, resulting in 13.59 GB per sample for a 7.3B parameter model. This makes TracIn infeasible at LLM scale: 500 samples would require 6.64 TB of storage. LARK's OPORP projection achieves a 54,000$\times$ compression ratio while maintaining attribution validity.
 
 \noindent\textbf{Attribution Accuracy.}
-We compare RapidIn and BM25 on their ability to correctly attribute model predictions to fine-tuning data. Table~\ref{tab:accuracy} shows the results.
+We compare LARK and BM25 on their ability to correctly attribute model predictions to fine-tuning data. Table~\ref{tab:accuracy} shows the results.
 
 \begin{table}[t]
 \centering
-\caption{Attribution Accuracy: RapidIn vs BM25}
+\caption{Attribution Accuracy: LARK vs BM25}
 \label{tab:accuracy}
 \begin{tabular}{lcc}
 \hline
 \textbf{Method} & \textbf{FT Wins} & \textbf{Interpretation} \\
 \hline
-RapidIn & 86.6\% & Gradient-based \\
+LARK & 86.6\% & Gradient-based \\
 BM25 & 40.4\% & Lexical similarity \\
 \hline
 \multicolumn{3}{c}{\textbf{Difference: +46.2 percentage points}} \\
@@ -155,20 +155,20 @@ BM25 & 40.4\% & Lexical similarity \\
 \end{tabular}
 \end{table}
 
-RapidIn correctly identifies fine-tuning data as more influential in 86.6\% of test queries, compared to only 40.4\% for BM25. This 46.2 percentage point difference demonstrates that:
+LARK correctly identifies fine-tuning data as more influential in 86.6\% of test queries, compared to only 40.4\% for BM25. This 46.2 percentage point difference demonstrates that:
 \begin{itemize}[nosep,leftmargin=*]
     \item BM25 cannot distinguish between data sources with similar medical vocabulary, resulting in near-random attribution.
-    \item RapidIn captures the model's actual learned associations through gradients, correctly reflecting that the fine-tuned model relies more heavily on fine-tuning data.
+    \item LARK captures the model's actual learned associations through gradients, correctly reflecting that the fine-tuned model relies more heavily on fine-tuning data.
 \end{itemize}
 
 \begin{figure}[t]
     \centering
     \includegraphics[width=\columnwidth]{figures/fig5_method_comparison.png}
-    \caption{RapidIn vs TracIn/BM25 comparison. (A) Storage efficiency: RapidIn requires 32,768$\times$ less storage than TracIn. (B) Attribution accuracy: RapidIn achieves 46.2 percentage points higher accuracy than BM25.}
+    \caption{LARK vs TracIn/BM25 comparison. (A) Storage efficiency: LARK achieves 54,000$\times$ compression over TracIn. (B) Attribution accuracy: LARK achieves 46.2 percentage points higher accuracy than BM25.}
     \label{fig:comparison}
 \end{figure}
 
-Figure~\ref{fig:comparison} summarizes these findings, showing RapidIn's advantages in both storage efficiency (Panel A) and attribution accuracy (Panel B).
+Figure~\ref{fig:comparison} summarizes these findings, showing LARK's advantages in both storage efficiency (Panel A) and attribution accuracy (Panel B).
 
 \subsection{Summary of Findings}
 
@@ -179,7 +179,7 @@ Our experiments yield three key insights for medical AI applications:
 
     \item \textbf{Training dynamics}: Fine-tuning exhibits a two-phase pattern where format learning dominates early training, while knowledge utilization from pretraining becomes increasingly important in later epochs (0\% $\rightarrow$ 28.4\% PT dominance).
 
-    \item \textbf{Method superiority}: RapidIn achieves 104,000$\times$ compression over TracIn while providing 46.2 percentage points higher attribution accuracy than lexical methods like BM25.
+    \item \textbf{Method superiority}: LARK achieves 54,000$\times$ compression over TracIn while providing 46.2 percentage points higher attribution accuracy than lexical methods like BM25.
 \end{enumerate}
 
 These findings demonstrate the value of gradient-based training data attribution for understanding and improving medical LLM fine-tuning.

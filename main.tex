@@ -16,7 +16,7 @@
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 \begin{document}
 
-\title{XXXXXX
+\title{Scalable Data Attribution Reveals Fine-Tuning Unlocks LLM Pretrained Knowledge in Biomedical Question Answering
 }
 
 \author{\IEEEauthorblockN{Ye Cao}
@@ -59,11 +59,11 @@ zxu79@stevens.edu}
 \maketitle
 
 \begin{abstract}
-
+Fine-tuning large language models (LLMs) on biomedical question answering tasks yields strong performance, but the relative contributions of pretrained knowledge versus fine-tuning data remain opaque. Understanding this knowledge provenance is essential for trustworthy medical AI deployment. We employ LARK (Linearized Attribution via Rapid Kernel), a gradient-based training data attribution method that approximates influence functions using identity Hessian assumption and OPORP dimensionality reduction, achieving 54,000$\times$ storage compression for 7B-parameter models. Applying this method to OLMo-3-7B fine-tuned on PubMedQA, we discover a ``knowledge awakening'' phenomenon: while fine-tuning data dominates early training, pretrained knowledge influence increases monotonically throughout fine-tuning (0\% to 28.4\% pretraining dominance). Gradient-based attribution correctly distinguishes domain-relevant from irrelevant data, with medical content showing 28.5\% higher influence than entertainment content, and outperforms lexical methods (BM25) by 46.2 percentage points in attribution accuracy. Our findings suggest that fine-tuning serves as a key that progressively unlocks pretrained domain knowledge rather than simply imprinting new patterns.
 \end{abstract}
 
 \begin{IEEEkeywords}
-Large language model, data attribution
+Large language model, training data attribution, influence function, biomedical question answering, fine-tuning dynamics
 \end{IEEEkeywords}
 
 \input{sections/intro}
