@@ -1,27 +1,185 @@
-\section{Experiment}
+\section{Experiments}
+
+We conduct comprehensive experiments to evaluate the effectiveness of gradient-based training data attribution for understanding how fine-tuning shapes LLM behavior on medical question-answering tasks. Our experiments address three key research questions:
 
 \begin{itemize}[nosep,leftmargin=*]
-    \item \textbf{RQ1:} 
-    \item \textbf{RQ2:} 
+    \item \textbf{RQ1:} Can gradient-based attribution accurately distinguish between domain-relevant and domain-irrelevant training data?
+    \item \textbf{RQ2:} How does the relative influence of fine-tuning versus pretraining data evolve during the fine-tuning process?
+    \item \textbf{RQ3:} How does gradient-based attribution (RapidIn) compare to lexical-based retrieval (BM25) in terms of efficiency and accuracy?
 \end{itemize}
 
-\subsection{Settings}
+\subsection{Experimental Setup}
 
-\noindent\textbf{Dataset.}
-We used the GSM8k dataset~\cite{cobbe2021training}, a benchmark that contains a bunch of math-related word problems. Most of the problems require multi-step arithmetic reasoning. We mostly focused on the "test" split from the "main" configuration of the dataset. This provides clean, curated problems with step-by-step answers for evaluation. The GSM8k dataset is widely used for evaluating the performance of a model. This research builds the foundation of meta-questions to probe the model's understanding of compression.
+\noindent\textbf{Datasets.}
+We use the PubMedQA dataset~\cite{jin2019pubmedqa} for our medical question-answering task. PubMedQA contains biomedical research questions where each question is paired with a PubMed abstract as context, and the task is to answer ``yes'', ``no'', or ``maybe'' based on the evidence. We use 500 samples from the labeled training split for fine-tuning and 500 samples from the test split for evaluation.
 
-\noindent\textbf{Testbed.}
-All experiments were performed on a single workstation equipped with an NVIDIA GPU. In addition, we created and ran code on Google Colab. The code dynamically selects the computation device based on availability. Typically, it uses CUDA when a GPU is present or defaults to CPU otherwise. For our results, we used a CUDA GPU, which enables efficient inference with the Qwen2.5-0.5 B-Instruct model~\cite{bai2023qwen}. The models and tokenizers were loaded from the Hugging Face Transformers library with torch\_dtype "auto" to optimize memory usage during inference.
+For training data attribution, we construct four data sources:
+\begin{itemize}[nosep,leftmargin=*]
+    \item \textbf{Finetune Data}: 500 PubMedQA training samples formatted with ChatML template.
+    \item \textbf{Medical Pretrain Data}: 500 BM25-retrieved medical documents from the model's pretraining corpus that are semantically similar to test queries.
+    \item \textbf{Entertainment Pretrain Data}: 500 randomly sampled non-medical documents (song lyrics, web content) as a control group.
+\end{itemize}
 
+To isolate the effect of QA formatting from content, we create two versions of each pretrain source: (1) \textit{NoFormat} - raw text without QA structure, and (2) \textit{Formatted} - same content wrapped in the ChatML QA template matching the fine-tuning format.
 
+\noindent\textbf{Model and Training.}
+We use OLMo-3-7B-Instruct~\cite{groeneveld2024olmo} as our base model, a 7.3 billion parameter instruction-tuned language model. We perform full fine-tuning of all model parameters, enabled by the NVIDIA GH200 GPU with 100GB unified memory. We train for 5 epochs with batch size 4 and learning rate $2 \times 10^{-4}$ (reduced to $2 \times 10^{-5}$ for epochs 4-5). Model checkpoints are saved after each epoch to track training dynamics.
 
-\noindent\textbf{Evaluation Metric.} We obtain the ground truth regarding the compression states of LLMs. Given a probe query, if the LLM responses with the answer that aligns with its ground truth compression states, we mark it as correct. Then we report the average accuracy over the all queries.
+\noindent\textbf{Attribution Method.}
+We employ RapidIn~\cite{zhang2024rapidin}, a gradient-based training data attribution method that computes influence scores via cosine similarity between projected gradients. For each test query, we compute the gradient of the loss with respect to model parameters, project it to a low-dimensional space ($k=65536$), and calculate similarity with projected training gradients. Higher similarity indicates stronger influence on the model's prediction.
 
-\subsection{Answers to RQ1:}
+\noindent\textbf{Evaluation Metrics.}
+We report the following metrics:
+\begin{itemize}[nosep,leftmargin=*]
+    \item \textbf{Mean Max Influence}: Average of maximum influence scores across test queries for each data source.
+    \item \textbf{FT/PT Ratio}: Ratio of fine-tuning influence to pretrain influence.
+    \item \textbf{FT Wins (\%)}: Percentage of test queries where fine-tuning data has higher max influence than pretrain data.
+    \item \textbf{Format Effect}: Ratio of formatted to noformat influence, measuring QA template contribution.
+\end{itemize}
 
+\subsection{RQ1: Attribution Validation}
 
+To validate that gradient-based attribution captures meaningful semantic relationships, we compare influence scores across different data sources. Table~\ref{tab:validation} shows the results at the best-performing checkpoint (Epoch 2, 74.4\% accuracy).
 
+\begin{table}[t]
+\centering
+\caption{Influence Score Comparison Across Data Sources (Epoch 2)}
+\label{tab:validation}
+\begin{tabular}{lcc}
+\hline
+\textbf{Data Source} & \textbf{Mean Max} & \textbf{FT Wins} \\
+\hline
+Finetune (Medical QA) & 0.386 & - \\
+Medical + Format & 0.365 & 86.6\% \\
+Medical NoFormat & 0.117 & 100\% \\
+Entertainment + Format & 0.284 & 100\% \\
+Entertainment NoFormat & 0.095 & 100\% \\
+\hline
+\end{tabular}
+\end{table}
 
+The results demonstrate that gradient-based attribution correctly identifies domain relevance: medical data consistently shows higher influence than entertainment data, regardless of formatting. Specifically, medical pretrain data with QA formatting achieves mean influence of 0.365, compared to 0.284 for entertainment with identical formatting. This 28.5\% difference validates that the attribution method captures content-based influence beyond format similarity.
 
+Furthermore, the dramatic difference between formatted (0.365) and noformat (0.117) versions of the same medical content reveals that approximately 3$\times$ of the measured influence comes from the QA template structure. This finding has important implications for understanding what fine-tuned models actually learn.
 
-\subsection{Answers to RQ2: .}
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/fig1_rapidin_validation.png}
+    \caption{Influence scores across training epochs. (A) Formatted data: biomedical content consistently outperforms entertainment. (B) Raw data: medical content shows higher influence than entertainment, validating content-based attribution.}
+    \label{fig:validation}
+\end{figure}
+
+Figure~\ref{fig:validation} illustrates these patterns across all training epochs. Panel A shows that for formatted data, biomedical content (finetune and medical pretrain) consistently achieves higher influence than entertainment pretrain. Panel B confirms this pattern holds for raw (noformat) data, where medical content maintains higher influence than entertainment throughout training.
+
+\subsection{RQ2: Training Dynamics}
+
+We investigate how the relative importance of fine-tuning versus pretraining data evolves during the fine-tuning process. Table~\ref{tab:dynamics} presents the complete results across all checkpoints.
+
+\begin{table}[t]
+\centering
+\caption{Influence Score Evolution During Fine-tuning}
+\label{tab:dynamics}
+\begin{tabular}{lccccc}
+\hline
+\textbf{Epoch} & \textbf{FT} & \textbf{PT} & \textbf{Ratio} & \textbf{PT Wins} & \textbf{Acc.} \\
+\hline
+0 (base) & 0.482 & 0.395 & 1.22 & 0.0\% & 41.8\% \\
+1 & 0.473 & 0.431 & 1.10 & 1.8\% & 69.0\% \\
+2 & 0.386 & 0.365 & 1.06 & 13.4\% & 74.4\% \\
+3 & 0.344 & 0.327 & 1.05 & 16.6\% & 69.0\% \\
+4* & 0.314 & 0.291 & 1.08 & 24.8\% & - \\
+5* & 0.366 & 0.341 & 1.07 & 28.4\% & - \\
+\hline
+\multicolumn{6}{l}{\small *Epochs 4-5 use lower learning rate ($2 \times 10^{-5}$)}
+\end{tabular}
+\end{table}
+
+Several key observations emerge from these results:
+
+\noindent\textbf{Pretraining becomes increasingly important.} The percentage of queries where pretrain data shows higher influence (PT Wins) increases monotonically from 0\% at baseline to 28.4\% by Epoch 5. This suggests that as the model learns the task format, it increasingly leverages domain knowledge from pretraining.
+
+\noindent\textbf{Format effect decreases during training.} We observe the format effect (ratio of formatted to noformat influence) decrease from 3.71$\times$ at baseline to 2.86$\times$ by Epoch 4. This indicates that the model becomes less reliant on exact format matching as training progresses.
+
+\noindent\textbf{Two-phase learning pattern.} The training dynamics suggest two distinct phases: an early ``format learning'' phase (Epochs 0-1) where the model rapidly adapts to the QA structure, followed by a ``knowledge utilization'' phase (Epochs 2+) where the model increasingly draws on pretrained domain knowledge.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/fig4_pt_importance_trend.png}
+    \caption{Pretraining influence increases during fine-tuning. The percentage of queries where pretrain data dominates rises from 0\% to 28.4\%, suggesting the model increasingly leverages domain knowledge.}
+    \label{fig:dynamics}
+\end{figure}
+
+Figure~\ref{fig:dynamics} visualizes this trend, showing the monotonic increase in pretrain influence throughout training. The transition between phases is highlighted, with the lower learning rate period (Epochs 4-5) showing continued growth in pretrain reliance.
+
+\subsection{RQ3: Method Comparison}
+
+We compare RapidIn (gradient-based) against BM25 (lexical-based retrieval) for training data attribution, evaluating both efficiency and accuracy.
+
+\noindent\textbf{Storage Efficiency.}
+Table~\ref{tab:efficiency} compares the storage requirements of different attribution methods for a 7.3B parameter model.
+
+\begin{table}[t]
+\centering
+\caption{Storage Requirements for Attribution Methods}
+\label{tab:efficiency}
+\begin{tabular}{lcc}
+\hline
+\textbf{Method} & \textbf{Per Sample} & \textbf{500 Samples} \\
+\hline
+TracIn (Full Gradient) & 13.59 GB & 6.64 TB \\
+RapidIn ($k$=65536) & 130 KB & 65 MB \\
+\hline
+\multicolumn{3}{c}{\textbf{Compression Ratio: 104,000$\times$}} \\
+\hline
+\end{tabular}
+\end{table}
+
+Traditional gradient-based methods like TracIn require storing the full gradient for each training sample, resulting in 13.59 GB per sample for a 7.3B parameter model. This makes TracIn infeasible at LLM scale---500 samples would require 6.64 TB of storage. RapidIn's projection approach achieves a 104,000$\times$ compression ratio while maintaining attribution validity.
+
+\noindent\textbf{Attribution Accuracy.}
+We compare RapidIn and BM25 on their ability to correctly attribute model predictions to fine-tuning data. Table~\ref{tab:accuracy} shows the results.
+
+\begin{table}[t]
+\centering
+\caption{Attribution Accuracy: RapidIn vs BM25}
+\label{tab:accuracy}
+\begin{tabular}{lcc}
+\hline
+\textbf{Method} & \textbf{FT Wins} & \textbf{Interpretation} \\
+\hline
+RapidIn & 86.6\% & Gradient-based \\
+BM25 & 40.4\% & Lexical similarity \\
+\hline
+\multicolumn{3}{c}{\textbf{Difference: +46.2 percentage points}} \\
+\hline
+\end{tabular}
+\end{table}
+
+RapidIn correctly identifies fine-tuning data as more influential in 86.6\% of test queries, compared to only 40.4\% for BM25. This 46.2 percentage point difference demonstrates that:
+\begin{itemize}[nosep,leftmargin=*]
+    \item BM25 cannot distinguish between data sources with similar medical vocabulary, resulting in near-random attribution.
+    \item RapidIn captures the model's actual learned associations through gradients, correctly reflecting that the fine-tuned model relies more heavily on fine-tuning data.
+\end{itemize}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/fig5_method_comparison.png}
+    \caption{RapidIn vs TracIn/BM25 comparison. (A) Storage efficiency: RapidIn requires 32,768$\times$ less storage than TracIn. (B) Attribution accuracy: RapidIn achieves 46.2 percentage points higher accuracy than BM25.}
+    \label{fig:comparison}
+\end{figure}
+
+Figure~\ref{fig:comparison} summarizes these findings, showing RapidIn's advantages in both storage efficiency (Panel A) and attribution accuracy (Panel B).
+
+\subsection{Summary of Findings}
+
+Our experiments yield three key insights for medical AI applications:
+
+\begin{enumerate}[nosep,leftmargin=*]
+    \item \textbf{Attribution validation}: Gradient-based methods correctly distinguish domain-relevant from domain-irrelevant data, with medical content showing 28.5\% higher influence than entertainment content under identical formatting.
+
+    \item \textbf{Training dynamics}: Fine-tuning exhibits a two-phase pattern where format learning dominates early training, while knowledge utilization from pretraining becomes increasingly important in later epochs (0\% $\rightarrow$ 28.4\% PT dominance).
+
+    \item \textbf{Method superiority}: RapidIn achieves 104,000$\times$ compression over TracIn while providing 46.2 percentage points higher attribution accuracy than lexical methods like BM25.
+\end{enumerate}
+
+These findings demonstrate the value of gradient-based training data attribution for understanding and improving medical LLM fine-tuning.
