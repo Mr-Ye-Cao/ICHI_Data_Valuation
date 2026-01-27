@@ -1,0 +1,27 @@
+\section{Experiment}
+
+\begin{itemize}[nosep,leftmargin=*]
+    \item \textbf{RQ1:} 
+    \item \textbf{RQ2:} 
+\end{itemize}
+
+\subsection{Settings}
+
+\noindent\textbf{Dataset.}
+We used the GSM8k dataset~\cite{cobbe2021training}, a benchmark that contains a bunch of math-related word problems. Most of the problems require multi-step arithmetic reasoning. We mostly focused on the "test" split from the "main" configuration of the dataset. This provides clean, curated problems with step-by-step answers for evaluation. The GSM8k dataset is widely used for evaluating the performance of a model. This research builds the foundation of meta-questions to probe the model's understanding of compression.
+
+\noindent\textbf{Testbed.}
+All experiments were performed on a single workstation equipped with an NVIDIA GPU. In addition, we created and ran code on Google Colab. The code dynamically selects the computation device based on availability. Typically, it uses CUDA when a GPU is present or defaults to CPU otherwise. For our results, we used a CUDA GPU, which enables efficient inference with the Qwen2.5-0.5 B-Instruct model~\cite{bai2023qwen}. The models and tokenizers were loaded from the Hugging Face Transformers library with torch\_dtype "auto" to optimize memory usage during inference.
+
+
+
+\noindent\textbf{Evaluation Metric.} We obtain the ground truth regarding the compression states of LLMs. Given a probe query, if the LLM responses with the answer that aligns with its ground truth compression states, we mark it as correct. Then we report the average accuracy over the all queries.
+
+\subsection{Answers to RQ1:}
+
+
+
+
+
+
+\subsection{Answers to RQ2: .}
