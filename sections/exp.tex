@@ -62,12 +62,12 @@ The results demonstrate that gradient-based attribution correctly identifies dom
 
 Furthermore, the dramatic difference between formatted (0.365) and noformat (0.117) versions of the same medical content reveals that approximately 3$\times$ of the measured influence comes from the QA template structure. This finding has important implications for understanding what fine-tuned models actually learn.
 
-\begin{figure}[t]
+\begin{figure*}[t]
     \centering
-    \includegraphics[width=\columnwidth]{figures/fig1_rapidin_validation.png}
+    \includegraphics[width=\textwidth]{figures/fig1_rapidin_validation.png}
     \caption{Influence scores across training epochs. (A) Formatted data: biomedical content consistently outperforms entertainment. (B) Raw data: medical content shows higher influence than entertainment, validating content-based attribution.}
     \label{fig:validation}
-\end{figure}
+\end{figure*}
 
 Figure~\ref{fig:validation} illustrates these patterns across all training epochs. Panel A shows that for formatted data, biomedical content (finetune and medical pretrain) consistently achieves higher influence than entertainment pretrain. Panel B confirms this pattern holds for raw (noformat) data, where medical content maintains higher influence than entertainment throughout training.
 
@@ -102,12 +102,12 @@ Several key observations emerge from these results:
 
 \noindent\textbf{Two-phase learning pattern.} The training dynamics suggest two distinct phases: an early ``format learning'' phase (Epochs 0-1) where the model rapidly adapts to the QA structure, followed by a ``knowledge utilization'' phase (Epochs 2+) where the model increasingly draws on pretrained domain knowledge.
 
-\begin{figure}[t]
+\begin{figure*}[t]
     \centering
-    \includegraphics[width=\columnwidth]{figures/fig4_pt_importance_trend.png}
+    \includegraphics[width=0.8\textwidth]{figures/fig4_pt_importance_trend.png}
     \caption{Pretraining influence increases during fine-tuning. The percentage of queries where pretrain data dominates rises from 0\% to 28.4\%, suggesting the model increasingly leverages domain knowledge.}
     \label{fig:dynamics}
-\end{figure}
+\end{figure*}
 
 Figure~\ref{fig:dynamics} visualizes this trend, showing the monotonic increase in pretrain influence throughout training. The transition between phases is highlighted, with the lower learning rate period (Epochs 4-5) showing continued growth in pretrain reliance.
 
@@ -161,12 +161,12 @@ LARK correctly identifies fine-tuning data as more influential in 86.6\% of test
     \item LARK captures the model's actual learned associations through gradients, correctly reflecting that the fine-tuned model relies more heavily on fine-tuning data.
 \end{itemize}
 
-\begin{figure}[t]
+\begin{figure*}[t]
     \centering
-    \includegraphics[width=\columnwidth]{figures/fig5_method_comparison.png}
+    \includegraphics[width=\textwidth]{figures/fig5_method_comparison.png}
     \caption{LARK vs TracIn/BM25 comparison. (A) Storage efficiency: LARK achieves 54,000$\times$ compression over TracIn. (B) Attribution accuracy: LARK achieves 46.2 percentage points higher accuracy than BM25.}
     \label{fig:comparison}
-\end{figure}
+\end{figure*}
 
 Figure~\ref{fig:comparison} summarizes these findings, showing LARK's advantages in both storage efficiency (Panel A) and attribution accuracy (Panel B).
 

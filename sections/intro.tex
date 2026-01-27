@@ -1,5 +1,12 @@
 \section{Introduction}
 
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/fig0_overview.png}
+    \caption{Overview of training data attribution. Given a test query and model response, influence estimation quantifies each training sample's contribution to the prediction. High-influence samples (e.g., medical QA about influenza symptoms) are semantically relevant, while low-influence samples (e.g., astronomy facts) have minimal impact.}
+    \label{fig:overview}
+\end{figure}
+
 Large language models (LLMs) have achieved remarkable success in biomedical question answering, yet a fundamental question remains unanswered: \textit{What knowledge source (pretraining or fine-tuning data) drives the model's predictions?} This transparency is critical for deploying trustworthy AI in healthcare, where clinical accountability demands understanding the provenance of model outputs.
 
 When fine-tuning an LLM on biomedical QA tasks like PubMedQA, the model draws from two knowledge sources: (1) the vast pretrained corpus containing general and medical knowledge, and (2) task-specific fine-tuning examples. Current practices treat these models as black boxes, offering no visibility into which source influences specific predictions. This opacity hinders bias detection, model debugging, and regulatory compliance in medical AI systems.
