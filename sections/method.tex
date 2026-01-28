@@ -35,7 +35,7 @@ This positive semi-definite approximation is valid near convergence and enables 
 
 This reduces influence computation to gradient inner products, but still requires $O(d)$ storage per sample, which is infeasible for billion-parameter LLMs.
 
-\textbf{Approximation 3: OPORP Dimensionality Reduction.} To achieve practical scalability, we employ OPORP (One Permutation + One Random Projection), an efficient dimensionality reduction technique. OPORP combines a random permutation $\pi$ with a single random projection, achieving near-optimal variance while requiring only $O(d)$ time complexity.
+\textbf{Approximation 3: OPORP Dimensionality Reduction.} To achieve practical scalability, we employ OPORP (One Permutation + One Random Projection)~\cite{li2023oporp}, an efficient dimensionality reduction technique. OPORP combines a random permutation $\pi$ with a single random projection, achieving near-optimal variance while requiring only $O(d)$ time complexity.
 
 Specifically, for a gradient vector $\nabla_\theta \ell(z_i, \theta) \in \mathbb{R}^d$, OPORP first applies a random permutation $\pi$ to the coordinates, then partitions the permuted vector into $k$ bins and aggregates each bin with random signs:
 \begin{equation}
@@ -52,7 +52,7 @@ Using cosine similarity normalizes for gradient magnitude variations across samp
 
 \subsection{Theoretical Justification}
 
-OPORP provides an unbiased estimator of inner products with variance that approaches the optimal Johnson-Lindenstrauss bound. The key property is:
+OPORP provides an unbiased estimator of inner products with variance that approaches the optimal Johnson-Lindenstrauss bound~\cite{johnson1984extensions}. The key property is:
 \begin{equation}
     \mathbb{E}[g_i^\top g_j] = \nabla_\theta \ell(z_i, \theta)^\top \nabla_\theta \ell(z_j, \theta)
 \end{equation}

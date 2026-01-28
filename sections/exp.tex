@@ -113,7 +113,7 @@ Figure~\ref{fig:dynamics} visualizes this trend, showing the monotonic increase 
 
 \subsection{RQ3: Method Comparison}
 
-We compare LARK (gradient-based) against BM25 (lexical-based retrieval) for training data attribution, evaluating both efficiency and accuracy.
+We compare LARK (gradient-based) against BM25~\cite{robertson2009bm25} (lexical-based retrieval) for training data attribution, evaluating both efficiency and accuracy.
 
 \noindent\textbf{Storage Efficiency.}
 Table~\ref{tab:efficiency} compares the storage requirements of different attribution methods for a 7.3B parameter model.
@@ -134,7 +134,7 @@ LARK ($k$=65536) & 260 KB & 130 MB \\
 \end{tabular}
 \end{table}
 
-Traditional gradient-based methods like TracIn require storing the full gradient for each training sample, resulting in 13.59 GB per sample for a 7.3B parameter model. This makes TracIn infeasible at LLM scale: 500 samples would require 6.64 TB of storage. LARK's OPORP projection achieves a 54,000$\times$ compression ratio while maintaining attribution validity.
+Traditional gradient-based methods like TracIn~\cite{pruthi2020estimating} require storing the full gradient for each training sample, resulting in 13.59 GB per sample for a 7.3B parameter model. This makes TracIn infeasible at LLM scale: 500 samples would require 6.64 TB of storage. LARK's OPORP projection achieves a 54,000$\times$ compression ratio while maintaining attribution validity.
 
 \noindent\textbf{Attribution Accuracy.}
 We compare LARK and BM25 on their ability to correctly attribute model predictions to fine-tuning data. Table~\ref{tab:accuracy} shows the results.
