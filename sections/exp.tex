@@ -65,7 +65,7 @@ Furthermore, the dramatic difference between formatted (0.365) and noformat (0.1
 \begin{figure*}[t]
     \centering
     \includegraphics[width=\textwidth]{figures/fig1_rapidin_validation.png}
-    \caption{Influence scores across training epochs. (A) Formatted data: biomedical content consistently outperforms entertainment. (B) Raw data: medical content shows higher influence than entertainment, validating content-based attribution.}
+    \caption{Gradient-based attribution validates domain relevance: biomedical content shows higher influence than entertainment. (A) Formatted data: fine-tuning and medical pretrain data consistently outperform entertainment pretrain across all epochs, demonstrating that biomedical content receives higher attribution scores. (B) Raw data: medical content maintains higher influence than entertainment even without QA formatting, confirming content-based rather than format-based attribution.}
     \label{fig:validation}
 \end{figure*}
 
@@ -105,7 +105,7 @@ Several key observations emerge from these results:
 \begin{figure}[t]
     \centering
     \includegraphics[width=\columnwidth]{figures/fig4_pt_importance_trend.png}
-    \caption{Pretraining influence increases during fine-tuning. The percentage of queries where pretrain data dominates rises from 0\% to 28.4\%, suggesting the model increasingly leverages domain knowledge.}
+    \caption{Pretraining becomes increasingly important during fine-tuning. The percentage of queries where pretrain data shows higher influence than fine-tuning data rises monotonically from 0\% to 28.4\% across training epochs. This reveals a two-phase pattern: an early format learning phase (Epochs 0--1) followed by a knowledge utilization phase (Epochs 2+) where the model increasingly leverages pretrained domain knowledge.}
     \label{fig:dynamics}
 \end{figure}
 
@@ -164,7 +164,7 @@ LARK correctly identifies fine-tuning data as more influential in 86.6\% of test
 \begin{figure*}[t]
     \centering
     \includegraphics[width=\textwidth]{figures/fig5_method_comparison.png}
-    \caption{LARK vs TracIn/BM25 comparison. (A) Storage efficiency: LARK achieves 54,000$\times$ compression over TracIn. (B) Attribution accuracy: LARK achieves 46.2 percentage points higher accuracy than BM25.}
+    \caption{LARK achieves both storage efficiency and attribution accuracy advantages. (A) Storage efficiency: LARK requires only 223 MB for 500 samples compared to TracIn's 7.3 TB, achieving 32,768$\times$ compression through OPORP dimensionality reduction. (B) Attribution accuracy: LARK correctly identifies fine-tuning data as more influential in 86.6\% of queries, compared to only 40.4\% for BM25 (near random baseline of 50\%), demonstrating a 46.2 percentage point improvement over lexical methods.}
     \label{fig:comparison}
 \end{figure*}
 
