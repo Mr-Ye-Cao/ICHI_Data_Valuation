@@ -62,14 +62,21 @@ The results demonstrate that gradient-based attribution correctly identifies dom
 
 Furthermore, the dramatic difference between formatted (0.365) and noformat (0.117) versions of the same medical content reveals that approximately 3$\times$ of the measured influence comes from the QA template structure. This finding has important implications for understanding what fine-tuned models actually learn.
 
-\begin{figure*}[t]
+\begin{figure}[t]
     \centering
-    \includegraphics[width=\textwidth]{figures/fig1_rapidin_validation.png}
-    \caption{Gradient-based attribution validates domain relevance: biomedical content shows higher influence than entertainment. (A) Formatted data: fine-tuning and medical pretrain data consistently outperform entertainment pretrain across all epochs, demonstrating that biomedical content receives higher attribution scores. (B) Raw data: medical content maintains higher influence than entertainment even without QA formatting, confirming content-based rather than format-based attribution.}
-    \label{fig:validation}
-\end{figure*}
+    \includegraphics[width=\columnwidth]{figures/fig1a_formatted_data.png}
+    \caption{Gradient-based attribution validates domain relevance with formatted data. Fine-tuning and medical pretrain data consistently show higher influence than entertainment pretrain across all epochs, demonstrating that biomedical content receives higher attribution scores regardless of training progress.}
+    \label{fig:validation_formatted}
+\end{figure}
 
-Figure~\ref{fig:validation} illustrates these patterns across all training epochs. Panel A shows that for formatted data, biomedical content (finetune and medical pretrain) consistently achieves higher influence than entertainment pretrain. Panel B confirms this pattern holds for raw (noformat) data, where medical content maintains higher influence than entertainment throughout training.
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/fig1b_raw_data.png}
+    \caption{Raw data comparison confirms content-based attribution. Medical content maintains higher influence than entertainment even without QA formatting, confirming that the attribution method captures semantic relevance rather than format similarity alone.}
+    \label{fig:validation_raw}
+\end{figure}
+
+Figure~\ref{fig:validation_formatted} and Figure~\ref{fig:validation_raw} illustrate these patterns across all training epochs. Figure~\ref{fig:validation_formatted} shows that for formatted data, biomedical content (finetune and medical pretrain) consistently achieves higher influence than entertainment pretrain. Figure~\ref{fig:validation_raw} confirms this pattern holds for raw (noformat) data, where medical content maintains higher influence than entertainment throughout training.
 
 \subsection{RQ2: Training Dynamics}
 
@@ -161,14 +168,21 @@ LARK correctly identifies fine-tuning data as more influential in 86.6\% of test
     \item LARK captures the model's actual learned associations through gradients, correctly reflecting that the fine-tuned model relies more heavily on fine-tuning data.
 \end{itemize}
 
-\begin{figure*}[t]
+\begin{figure}[t]
     \centering
-    \includegraphics[width=\textwidth]{figures/fig5_method_comparison.png}
-    \caption{LARK achieves both storage efficiency and attribution accuracy advantages. (A) Storage efficiency: LARK requires only 223 MB for 500 samples compared to TracIn's 7.3 TB, achieving 32,768$\times$ compression through OPORP dimensionality reduction. (B) Attribution accuracy: LARK correctly identifies fine-tuning data as more influential in 86.6\% of queries, compared to only 40.4\% for BM25 (near random baseline of 50\%), demonstrating a 46.2 percentage point improvement over lexical methods.}
-    \label{fig:comparison}
-\end{figure*}
+    \includegraphics[width=\columnwidth]{figures/fig5a_storage_efficiency.png}
+    \caption{LARK achieves dramatic storage efficiency improvements. LARK requires only 223 MB for 500 samples compared to TracIn's 7.3 TB, achieving 32,768$\times$ compression through OPORP dimensionality reduction, making gradient-based attribution feasible at LLM scale.}
+    \label{fig:storage}
+\end{figure}
 
-Figure~\ref{fig:comparison} summarizes these findings, showing LARK's advantages in both storage efficiency (Panel A) and attribution accuracy (Panel B).
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/fig5b_attribution_accuracy.png}
+    \caption{LARK outperforms lexical methods in attribution accuracy. LARK correctly identifies fine-tuning data as more influential in 86.6\% of queries, compared to only 40.4\% for BM25 (near random baseline of 50\%), demonstrating a 46.2 percentage point improvement over lexical retrieval methods.}
+    \label{fig:accuracy}
+\end{figure}
+
+Figure~\ref{fig:storage} and Figure~\ref{fig:accuracy} summarize these findings, showing LARK's advantages in both storage efficiency and attribution accuracy.
 
 \subsection{Summary of Findings}
 
