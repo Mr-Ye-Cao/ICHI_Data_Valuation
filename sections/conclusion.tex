@@ -1,10 +1,6 @@
 \section{Conclusion}
 
-This work investigates the dynamics of knowledge utilization in fine-tuned LLMs for biomedical question answering using scalable gradient-based training data attribution. By applying LARK to OLMo-3-7B fine-tuned on PubMedQA, we discover a ``knowledge awakening'' phenomenon: pretrained knowledge influence increases monotonically during fine-tuning (0\% to 28.4\% dominance), suggesting that fine-tuning progressively unlocks rather than overwrites pretrained domain knowledge.
-
-Our experiments validate that gradient-based attribution correctly distinguishes domain-relevant from irrelevant data (28.5\% higher influence for medical content) and substantially outperforms lexical methods like BM25 (46.2 percentage point improvement). These findings have important implications for healthcare AI: (1) practitioners can use attribution to audit which knowledge sources drive clinical predictions, (2) the two-phase learning pattern (format learning followed by knowledge utilization) suggests optimal fine-tuning strategies, and (3) the strong performance of pretrained medical knowledge highlights the importance of high-quality pretraining corpora for biomedical applications.
-
-Future work includes extending this analysis to other medical NLP tasks, investigating how different fine-tuning strategies affect knowledge dynamics, and developing attribution-guided approaches for improving medical LLM reliability.
+We apply scalable gradient-based attribution (LARK) to investigate knowledge utilization in LLMs fine-tuned for biomedical QA. Our experiments reveal a ``knowledge awakening'' phenomenon: pretrained knowledge influence increases monotonically during fine-tuning (0\% to 28.4\% dominance), suggesting fine-tuning unlocks rather than overwrites pretrained domain knowledge. The method correctly distinguishes domain-relevant from irrelevant data and outperforms lexical methods like BM25 by 46.2 percentage points. These findings enable practitioners to audit knowledge sources driving clinical predictions and inform optimal fine-tuning strategies for medical AI.
 
 % \section{Acknowledgment}
 % The work of Zhaozhuo Xu was supported by NSF grants 2451398 and 2450524. 

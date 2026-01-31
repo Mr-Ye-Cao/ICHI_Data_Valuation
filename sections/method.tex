@@ -5,15 +5,15 @@ We employ gradient-based training data attribution, building upon influence func
 \subsection{Background: Influence Functions}
 
 Influence functions provide a principled framework for measuring how individual training samples affect model predictions. For a model trained by minimizing empirical risk $\mathcal{L}(\theta) = \frac{1}{n}\sum_{i=1}^{n} \ell(z_i, \theta)$, the influence of upweighting training sample $z_i$ by $\epsilon$ on the optimal parameters is:
-\begin{equation}
+\begin{align*}
     \frac{d\theta^*_{\epsilon,z_i}}{d\epsilon}\bigg|_{\epsilon=0} = -H_{\theta^*}^{-1} \nabla_\theta \ell(z_i, \theta^*)
-\end{equation}
+\end{align*}
 where $H_{\theta^*} = \nabla^2_\theta \mathcal{L}(\theta^*)$ is the Hessian matrix.
 
 The influence of $z_i$ on the loss at test point $z_{\text{test}}$ is then:
-\begin{equation}
+\begin{align*}
     \mathcal{I}(z_i, z_{\text{test}}) = -\nabla_\theta \ell(z_{\text{test}}, \theta^*)^\top H_{\theta^*}^{-1} \nabla_\theta \ell(z_i, \theta^*)
-\end{equation}
+\end{align*}
 
 Direct computation is intractable for LLMs due to: (1) the $O(d^3)$ cost of inverting the $d \times d$ Hessian, and (2) $O(d)$ storage per sample for full gradients, where $d$ can exceed $10^{10}$ for modern LLMs.
 
@@ -22,78 +22,55 @@ Direct computation is intractable for LLMs due to: (1) the $O(d^3)$ cost of inve
 We address these challenges through the following approximations.
 
 \textbf{Approximation 1: Gauss-Newton Hessian.} We approximate the Hessian with the Gauss-Newton matrix:
-\begin{equation}
+\begin{align*}
     H_{\theta} \approx G_{\theta} = \frac{1}{n}\sum_{i=1}^{n} \nabla_\theta \ell(z_i, \theta) \nabla_\theta \ell(z_i, \theta)^\top
-\end{equation}
+\end{align*}
 
 This positive semi-definite approximation is valid near convergence and enables efficient computation via the kernel trick.
 
 \textbf{Approximation 2: Identity Hessian.} We approximate $H^{-1} \approx I$, yielding:
-\begin{equation}
+\begin{align*}
     \mathcal{I}(z_i, z_{\text{test}}) \approx \nabla_\theta \ell(z_{\text{test}}, \theta)^\top \nabla_\theta \ell(z_i, \theta)
-\end{equation}
+\end{align*}
 
 This reduces influence computation to gradient inner products, but still requires $O(d)$ storage per sample, which is infeasible for billion-parameter LLMs.
 
 \textbf{Approximation 3: OPORP Dimensionality Reduction.} To achieve practical scalability, we employ OPORP (One Permutation + One Random Projection)~\cite{li2023oporp}, an efficient dimensionality reduction technique. OPORP combines a random permutation $\pi$ with a single random projection, achieving near-optimal variance while requiring only $O(d)$ time complexity.
 
 Specifically, for a gradient vector $\nabla_\theta \ell(z_i, \theta) \in \mathbb{R}^d$, OPORP first applies a random permutation $\pi$ to the coordinates, then partitions the permuted vector into $k$ bins and aggregates each bin with random signs:
-\begin{equation}
+\begin{align*}
     g_i[j] = \sum_{l \in \text{bin}_j} s_{\pi(l)} \cdot \nabla_\theta \ell(z_i, \theta)[\pi(l)]
-\end{equation}
+\end{align*}
 where $s \in \{-1, +1\}^d$ is a random sign vector and $\text{bin}_j$ denotes the $j$-th partition. This yields a compressed representation $g_i \in \mathbb{R}^k$ where $k \ll d$.
 
 The attribution score is then computed as:
-\begin{equation}
+\begin{align*}
     \phi(z_i, z_{\text{test}}) = \frac{g_{\text{test}}^\top g_i}{\|g_{\text{test}}\| \|g_i\|}
-\end{equation}
+\end{align*}
 
 Using cosine similarity normalizes for gradient magnitude variations across samples.
 
 \subsection{Theoretical Justification}
 
 OPORP provides an unbiased estimator of inner products with variance that approaches the optimal Johnson-Lindenstrauss bound~\cite{johnson1984extensions}. The key property is:
-\begin{equation}
+\begin{align*}
     \mathbb{E}[g_i^\top g_j] = \nabla_\theta \ell(z_i, \theta)^\top \nabla_\theta \ell(z_j, \theta)
-\end{equation}
+\end{align*}
 
 For $k = O(\epsilon^{-2}\log n)$, OPORP preserves pairwise gradient similarities up to multiplicative factor $(1 \pm \epsilon)$ with high probability, while requiring only $O(d)$ computation compared to $O(dk)$ for dense random projections. In practice, $k = 65,536$ provides sufficient fidelity for attribution tasks.
 
 \subsection{Efficient Implementation}
 
 The computation proceeds in two phases:
+\textbf{Offline Phase (Training Data Processing):}
+1) Initialize OPORP parameters: random permutation $\pi$ and sign vector $s \in \{-1,+1\}^d$.
+2) For each training sample $z_i \in \mathcal{D}$: compute gradient $\nabla_\theta \ell(z_i, \theta)$, apply OPORP: $g_i \leftarrow \text{OPORP}(\nabla_\theta \ell(z_i, \theta); \pi, s)$, and normalize and store: $\tilde{g}_i \leftarrow g_i / \|g_i\|$.
+\textbf{Online Phase (Query Attribution):}
+For each test query $q \in \mathcal{Q}$: 1) compute and project: $g_q \leftarrow \text{OPORP}(\nabla_\theta \ell(q, \theta); \pi, s)$, 2) normalize: $\tilde{g}_q \leftarrow g_q / \|g_q\|$, and 3) compute attribution: $\phi(z_i, q) \leftarrow \tilde{g}_q^\top \tilde{g}_i$ for all $z_i$.
 
-\noindent\textbf{Offline Phase (Training Data Processing):}
-\begin{enumerate}[nosep,leftmargin=*]
-    \item Initialize OPORP parameters: random permutation $\pi$ and sign vector $s \in \{-1,+1\}^d$
-    \item For each training sample $z_i \in \mathcal{D}$:
-    \begin{itemize}[nosep,leftmargin=*]
-        \item Compute gradient $\nabla_\theta \ell(z_i, \theta)$
-        \item Apply OPORP: $g_i \leftarrow \text{OPORP}(\nabla_\theta \ell(z_i, \theta); \pi, s)$
-        \item Normalize and store: $\tilde{g}_i \leftarrow g_i / \|g_i\|$
-    \end{itemize}
-\end{enumerate}
-
-\noindent\textbf{Online Phase (Query Attribution):}
-\begin{enumerate}[nosep,leftmargin=*]
-    \item For each test query $q \in \mathcal{Q}$:
-    \begin{itemize}[nosep,leftmargin=*]
-        \item Compute and project: $g_q \leftarrow \text{OPORP}(\nabla_\theta \ell(q, \theta); \pi, s)$
-        \item Normalize: $\tilde{g}_q \leftarrow g_q / \|g_q\|$
-        \item Compute attribution: $\phi(z_i, q) \leftarrow \tilde{g}_q^\top \tilde{g}_i$ for all $z_i$
-    \end{itemize}
-\end{enumerate}
-
-\textbf{Storage Complexity.} Each training sample requires $k \cdot 4$ bytes (float32), yielding:
-\begin{equation}
-    \text{Storage} = n \cdot k \cdot 4 \text{ bytes}
-\end{equation}
-
+\textbf{Storage Complexity.} Each training sample requires $k \cdot 4$ bytes (float32), yielding storage $ 4kn$ bytes.
 For OLMo-3-7B ($d \approx 7 \times 10^9$ parameters), with $n = 500$ samples and $k = 65,536$: projected gradient storage $= 500 \times 65,536 \times 4 = 130$ MB.
-
-Compare to full gradient storage: $500 \times 7 \times 10^9 \times 2 = 7$ TB (float16).
-
-\textbf{Compression Ratio:} $7 \text{ TB} / 130 \text{ MB} \approx 54,000\times$
+Compare to full gradient storage: $500 \times 7 \times 10^9 \times 2 = 7$ TB (float16). In other words, the compression ratio is $7 \text{ TB} / 130 \text{ MB} \approx 54,000\times$
 
 \subsection{Attribution Across Data Sources}
 

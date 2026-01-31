@@ -1,19 +1,20 @@
 \section{Introduction}
 
-\begin{figure}[t]
-    \centering
-    \includegraphics[width=\columnwidth]{figures/fig0_overview.png}
-    \caption{Overview of training data attribution. Given a test query and model response, influence estimation quantifies each training sample's contribution to the prediction. High-influence samples (e.g., medical QA about influenza symptoms) are semantically relevant, while low-influence samples (e.g., astronomy facts) have minimal impact.}
-    \label{fig:overview}
-\end{figure}
-
 Large language models (LLMs) have achieved remarkable success in biomedical question answering, yet a fundamental question remains unanswered: \textit{What knowledge source (pretraining or fine-tuning data) drives the model's predictions?} This transparency is critical for deploying trustworthy AI in healthcare, where clinical accountability demands understanding the provenance of model outputs.
 
 When fine-tuning an LLM on biomedical QA tasks like PubMedQA, the model draws from two knowledge sources: (1) the vast pretrained corpus containing general and medical knowledge, and (2) task-specific fine-tuning examples. Current practices treat these models as black boxes, offering no visibility into which source influences specific predictions. This opacity hinders bias detection, model debugging, and regulatory compliance in medical AI systems.
 
 Training data attribution methods aim to address this challenge by quantifying each training sample's influence on model predictions. However, existing approaches face critical limitations at LLM scale. Traditional influence functions~\cite{koh2017understanding} require inverting the Hessian matrix, which is computationally infeasible for billion-parameter models. Full gradient storage demands terabytes per dataset. Meanwhile, lexical methods like BM25~\cite{robertson2009bm25} capture only surface-level similarity, failing to reflect what the model \textit{actually learned} versus what merely \textit{looks similar}.
 
-In this paper, we employ LARK (Linearized Attribution via Rapid Kernel), a scalable gradient-based training data attribution method, to study knowledge dynamics in fine-tuned LLMs. LARK approximates influence functions by assuming an identity Hessian and uses OPORP (One Permutation + One Random Projection) for efficient dimensionality reduction, achieving 54,000$\times$ compression over full gradient storage while preserving attribution fidelity.
+In this paper, we employ LARK (Linearized Attribution via Rapid Kernel), a scalable gradient-based training data attribution method, to study knowledge dynamics in fine-tuned LLMs. LARK approximates influence functions by assuming an identity Hessian and uses OPORP (One Permutation + One Random Projection)~\cite{li2023oporp} for efficient dimensionality reduction, achieving 54,000$\times$ compression over full gradient storage while preserving attribution fidelity.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/workflow.pdf}
+    \caption{Overview of training data attribution. Given a test query and model response, influence estimation quantifies each training sample's contribution to the prediction. High-influence samples (e.g., medical QA about influenza symptoms) are semantically relevant, while low-influence samples (e.g., astronomy facts) have minimal impact.}
+    \label{fig:overview}
+    \vspace{-2em}
+\end{figure}
 
 We apply this method to study how fine-tuning shapes LLM behavior on PubMedQA using OLMo-3-7B. Our experiments reveal a surprising ``knowledge awakening'' phenomenon: while fine-tuning data dominates early training, pretrained knowledge becomes increasingly influential as training progresses (0\% $\rightarrow$ 28.4\% pretraining dominance). This suggests that fine-tuning acts as a ``key'' that unlocks relevant pretrained knowledge rather than simply imprinting new patterns.
 
